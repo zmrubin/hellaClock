@@ -64,6 +64,30 @@ private:
   const uint8_t row_mask_;
 
   union IoBits {
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+    struct {
+      // These reflect the GPIO mapping. The Revision1 and Revision2 boards
+      // have different GPIO mappings for 0/1 vs 3/4. Just use both.
+      unsigned int unused1 : 4;             // 0-3
+      unsigned int output_enable : 1;       // 4
+      unsigned int r1 : 1;                  // 5
+      unsigned int b1 : 1;                  // 6
+      unsigned int unused2 : 5;             // 7-11
+      unsigned int r2 : 1;                  // 12
+      unsigned int g1 : 1;                  // 13
+      unsigned int unused3 : 2;             // 14-15
+      unsigned int g2 : 1;                  // 16
+      unsigned int clock : 1;               // 17
+      unsigned int unused4 : 2;             // 18-19
+      unsigned int d : 1;                   // 20
+      unsigned int strobe : 1;              // 21
+      unsigned int a : 1;                   // 22
+      unsigned int b2 : 1;                  // 23
+      unsigned int unused5 : 2;             // 24-25
+      unsigned int b : 1;                   // 26
+      unsigned int c : 1;                   // 27
+    } bits;
+#else
     struct {
       // These reflect the GPIO mapping. The Revision1 and Revision2 boards
       // have different GPIO mappings for 0/1 vs 3/4. Just use both.
@@ -83,6 +107,7 @@ private:
       unsigned int g2 : 1;                  // 24
       unsigned int b2 : 1;                  // 25
     } bits;
+#endif
     uint32_t raw;
     IoBits() : raw(0) {}
   };

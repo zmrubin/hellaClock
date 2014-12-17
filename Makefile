@@ -1,4 +1,4 @@
-CXXFLAGS=-Wall -O3 -g
+CXXFLAGS=-Wall -O3 -g 
 BINARIES=led-matrix minimal-example text-example
 
 # Where our library resides. It is split between includes and the binary
@@ -24,7 +24,7 @@ text-example : text-example.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) text-example.o -o $@ $(LDFLAGS)
 
 %.o : %.cc
-	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -DADAFRUIT_RGBMATRIX_HAT -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(BINARIES)
