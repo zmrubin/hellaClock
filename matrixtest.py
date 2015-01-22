@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
-# Simple RGBMatrix example, using only Clear(), Fill() and SetPixel()
+# Simple RGBMatrix example, using only Clear(), Fill() and SetPixel().
+# These functions have an immediate effect on the display; no special
+# refresh operation needed.
+# Requires rgbmatrix.so present in the same directory.
 
 import time
 from rgbmatrix import Adafruit_RGBmatrix
