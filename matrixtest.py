@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Simple RGBMatrix example, using only Clear(), Fill() and SetPixel()
+
 import time
 from rgbmatrix import Adafruit_RGBmatrix
 

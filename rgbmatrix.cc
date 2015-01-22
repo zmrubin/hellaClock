@@ -3,12 +3,12 @@
 
   Very very simple at the moment...just a wrapper around the SetPixel,
   Fill, Clear and SetPWMBits functions of the librgbmatrix library.
-  Any sort of graphics functions would need to be written into one's
-  Python script.  Hope to make this connect neatly to the Python
-  Imaging Library or something.
+  Graphics primitives can be handled using the Python Imaging Library
+  and the SetImage method.
   ------------------------------------------------------------------------*/
 
 #include <python2.7/Python.h>
+#include <python2.7/Imaging.h>
 #include "led-matrix.h"
 
 using rgb_matrix::GPIO;
@@ -59,23 +59,22 @@ static PyObject *Clear(RGBmatrixObject *self) {
 static PyObject *Fill(RGBmatrixObject *self, PyObject *arg) {
         uint32_t c;
 	uint8_t  r, g, b;
+	int      status=0;
 
 	switch(PyTuple_Size(arg)) {
 	   case 1: // Packed color
-		if(!PyArg_ParseTuple(arg, "I", &c)) return Py_None;
-		r = (c >> 16) & 0xFF;
-		g = (c >>  8) & 0xFF;
-		b =  c        & 0xFF;
+		if((status = PyArg_ParseTuple(arg, "I", &c))) {
+			r = (c >> 16) & 0xFF;
+			g = (c >>  8) & 0xFF;
+			b =  c        & 0xFF;
+		}
 		break;
 	   case 3: // R, G, B
-		if(!PyArg_ParseTuple(arg, "BBB", &r, &g, &b))
-			return Py_None;
+		status = PyArg_ParseTuple(arg, "BBB", &r, &g, &b);
 		break;
-	   default:
-		return Py_None;
 	}
 
-	self->matrix->Fill(r, g, b);
+	if(status) self->matrix->Fill(r, g, b);
 
         Py_INCREF(Py_None);
         return Py_None;
@@ -84,36 +83,122 @@ static PyObject *Fill(RGBmatrixObject *self, PyObject *arg) {
 static PyObject *SetPixel(RGBmatrixObject *self, PyObject *arg) {
         uint32_t x, y, c;
 	uint8_t  r, g, b;
+	int      status=0;
 
 	switch(PyTuple_Size(arg)) {
 	   case 3: // X, Y, packed color
-		if(!PyArg_ParseTuple(arg, "IIBBB", &x, &y, &c))
-			return Py_None;
-		r = (c >> 16) & 0xFF;
-		g = (c >>  8) & 0xFF;
-		b =  c        & 0xFF;
+		if((status = PyArg_ParseTuple(arg, "IIBBB", &x, &y, &c))) {
+			r = (c >> 16) & 0xFF;
+			g = (c >>  8) & 0xFF;
+			b =  c        & 0xFF;
+		}
 		break;
 	   case 5: // X, Y, R, G, B
-		if(!PyArg_ParseTuple(arg, "IIBBB", &x, &y, &r, &g, &b))
-			return Py_None;
+		status = PyArg_ParseTuple(arg, "IIBBB", &x, &y, &r, &g, &b);
 		break;
-	   default:
-		return Py_None;
 	}
 
-	self->matrix->SetPixel(x, y, r, g, b);
+	if(status) self->matrix->SetPixel(x, y, r, g, b);
 
         Py_INCREF(Py_None);
         return Py_None;
 }
 
+// Copy Python Image to matrix.  Not all modes are supported;
+// RGB (or RGBA, but alpha is ignored), 8-bit paletted and 1-bit.
+static PyObject *SetImage(RGBmatrixObject *self, PyObject *arg) {
+
+	Imaging  im;
+	long     id;
+	int      status=0, mw, mh, sx=0, sy=0, dx=0, dy=0, n, x, y, w, h;
+	uint32_t c;
+	uint8_t  r, g, b;
+
+	switch(PyTuple_Size(arg)) {
+	   case 1: // Image ID
+		status = PyArg_ParseTuple(arg, "L", &id);
+		break;
+	   case 3: // Image ID, dest X & Y
+		status = PyArg_ParseTuple(arg, "LII", &id, &dx, &dy);
+		break;
+	}
+
+	if(status) {
+		im = (Imaging)id;            // -> Imaging struct
+		mw = self->matrix->width();  // Matrix dimensions
+		mh = self->matrix->height();
+		w  = im->xsize;
+		h  = im->ysize;
+		n  = dx + w - 1;             // x2
+		if(n >= mw) w -= n - mw + 1; // Clip right
+		n  = dy + h - 1;             // y2
+		if(n >= mh) h -= n - mh + 1; // Clip bottom
+		if(dx < 0) {                 // Clip left
+			w  += dx;
+			sx -= dx;
+			dx  = 0;
+		}
+		if(dy < 0) {                 // Clip top
+			h  += dy;
+			sy -= dy;
+			dy  = 0;
+		}
+
+		if((w > 0) && (h > 0)) {
+			if(!strncasecmp(im->mode, "RGB", 3)) {
+				// RGB image; alpha ignored if present
+				for(y=0; y<h; y++) {
+					for(x=0; x<w; x++) {
+						c = *(uint32_t *)(
+						  &IMAGING_PIXEL_RGB(
+						  im, sx + x, sy + y));
+						b = (c >> 16) & 0xFF;
+						g = (c >>  8) & 0xFF;
+						r =  c        & 0xFF;
+						self->matrix->SetPixel(
+						  dx + x, dy + y, r, g, b);
+					}
+				}
+			} else if(!strcasecmp(im->mode, "1")) {
+				// Bitmap image
+				for(y=0; y<h; y++) {
+					for(x=0; x<w; x++) {
+						r = IMAGING_PIXEL_1(
+						  im, sx + x, sy + y) ? 255 : 0;
+						self->matrix->SetPixel(
+						  dx + x, dy + y, r, r, r);
+					}
+				}
+			} else if((!strcasecmp(im->mode, "P")) &&
+				  (!strncasecmp(im->palette->mode, "RGB", 3))) {
+				// Paletted image (w/RGB palette)
+				for(y=0; y<h; y++) {
+					for(x=0; x<w; x++) {
+						c = IMAGING_PIXEL_P(
+						  im, sx + x, sy + y) * 4;
+						r = im->palette->palette[c];
+						g = im->palette->palette[c+1];
+						b = im->palette->palette[c+2];
+						self->matrix->SetPixel(
+						  dx + x, dy + y, r, g, b);
+					}
+				}
+			} else {
+				// Unsupported image mode
+			}
+		}
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyObject *SetPWMBits(RGBmatrixObject *self, PyObject *arg) {
 	uint8_t b;
 
-	if((PyTuple_Size(arg) != 1) || (!PyArg_ParseTuple(arg, "B", &b)))
-		return Py_None;
-
-	self->matrix->SetPWMBits(b);
+	if((PyTuple_Size(arg) == 1) && PyArg_ParseTuple(arg, "B", &b)) {
+		self->matrix->SetPWMBits(b);
+	}
 
         Py_INCREF(Py_None);
         return Py_None;
@@ -123,6 +208,7 @@ static PyMethodDef methods[] = {
   { "Clear"     , (PyCFunction)Clear     , METH_NOARGS , NULL },
   { "Fill"      , (PyCFunction)Fill      , METH_VARARGS, NULL },
   { "SetPixel"  , (PyCFunction)SetPixel  , METH_VARARGS, NULL },
+  { "SetImage"  , (PyCFunction)SetImage  , METH_VARARGS, NULL },
   { "SetPWMBits", (PyCFunction)SetPWMBits, METH_VARARGS, NULL },
   { NULL, NULL, 0, NULL }
 };
