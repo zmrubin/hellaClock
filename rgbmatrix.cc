@@ -104,6 +104,41 @@ static PyObject *SetPixel(RGBmatrixObject *self, PyObject *arg) {
         return Py_None;
 }
 
+// Copy whole display buffer to display from a list of bytes [R1,G1,B1,R2,G2,B2...]
+static PyObject *SetBuffer(RGBmatrixObject *self, PyObject *data) 
+{
+	//PyListObject* data = (PyListObject*)arg;
+    Py_ssize_t count;
+    int      w, h, offset, y, x;
+    uint8_t  r, g, b;
+
+    //status = PyArg_ParseTuple(args, "O", &data)
+    count = PyList_Size(data);
+
+    w = self->matrix->width();  // Matrix dimensions
+	h = self->matrix->height();
+	if(count != w*h*3)
+	{
+    	PyErr_SetString(PyExc_ValueError, "Data buffer incorrect size.");
+    	return NULL;
+	}
+
+	for(y=0; y<h; y++) 
+	{
+		for(x=0; x<w; x++) 
+		{
+			offset = (y*w*3)+(x*3);
+			r = PyInt_AsLong(PyList_GetItem(data, offset));
+			g = PyInt_AsLong(PyList_GetItem(data, offset+1));
+			b = PyInt_AsLong(PyList_GetItem(data, offset+2));
+			self->matrix->SetPixel(x, y, r, g, b);
+		}
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 // Copy Python Image to matrix.  Not all modes are supported;
 // RGB (or RGBA, but alpha is ignored), 8-bit paletted and 1-bit.
 static PyObject *SetImage(RGBmatrixObject *self, PyObject *arg) {
@@ -207,6 +242,7 @@ static PyObject *SetPWMBits(RGBmatrixObject *self, PyObject *arg) {
 static PyMethodDef methods[] = {
   { "Clear"     , (PyCFunction)Clear     , METH_NOARGS , NULL },
   { "Fill"      , (PyCFunction)Fill      , METH_VARARGS, NULL },
+  { "SetBuffer" , (PyCFunction)SetBuffer , METH_O,       NULL },
   { "SetPixel"  , (PyCFunction)SetPixel  , METH_VARARGS, NULL },
   { "SetImage"  , (PyCFunction)SetImage  , METH_VARARGS, NULL },
   { "SetPWMBits", (PyCFunction)SetPWMBits, METH_VARARGS, NULL },
