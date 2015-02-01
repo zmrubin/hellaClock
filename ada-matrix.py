@@ -9,7 +9,6 @@ from rgbmatrix import Adafruit_RGBmatrix
 from bibliopixel.drivers.driver_base import *
 
 class DriverAdaMatrix(DriverBase):
-
     # rows: height of the matrix, same as led-matrix example
     # chain: number of LEDMatrix panels, same as led-matrix example
     def __init__(self, rows = 32, chain = 1):
@@ -20,6 +19,14 @@ class DriverAdaMatrix(DriverBase):
     def update(self, data):
         self._matrix.SetBuffer(data)
 
+    #Matrix supports between 2^1 and 2^11 levels of PWM
+    #which translates to the total color bit-depth possible
+    #A lower value will take up less CPU cycles
+    def SetPWMBits(self, bits):
+        if bits < 1 or bits > 11:
+            raise ValueError("PWM level must be between 1 and 11")
+        self._matrix.SetPWMBits(bits)
+
 
 # #Usage is as follows:
 # #See the Wiki for more details: https://github.com/ManiacalLabs/BiblioPixel/wiki
@@ -29,6 +36,7 @@ class DriverAdaMatrix(DriverBase):
 # from ada-matrix import DriverAdaMatrix
 
 # driver = DriverAdaMatrix(rows=32, chain=1)
+# driver.SetPWMBits(6) #decrease bit-depth for better performance
 # #MUST use serpentine=False because rgbmatrix handles the data that way
 # led = LEDMatrix(driver, 32, 32, serpentine=False)
 
