@@ -32,36 +32,30 @@ enum {
 };
 
 static const long kBaseTimeNanos = 200;
-const long row_sleep_nanos[11] = {
-  (1 * kBaseTimeNanos),
-  (2 * kBaseTimeNanos),
-  (4 * kBaseTimeNanos),
-  (8 * kBaseTimeNanos),
-  (16 * kBaseTimeNanos),
-  (32 * kBaseTimeNanos),
-  (64 * kBaseTimeNanos),
-  (128 * kBaseTimeNanos),
-  (256 * kBaseTimeNanos),
-  (512 * kBaseTimeNanos),
-  (1024 * kBaseTimeNanos),
-};
+
+volatile uint32_t *freeRunTimer = NULL; // GPIO may override on startup
 
 static void sleep_nanos(long nanos) {
-  // For sleep times above 20usec, nanosleep seems to be fine, but it has
-  // an offset of about 20usec (on the RPi distribution I was testing it on).
-  // That means, we need to give it 80us to get 100us.
-  // For values lower than roughly 30us, this is not accurate anymore and we
-  // need to switch to busy wait.
-  // TODO: compile Linux kernel realtime extensions and watch if the offset-time
-  // changes and hope for less jitter.
   if (nanos > 28000) {
-    struct timespec sleep_time = { 0, nanos - 20000 };
-    nanosleep(&sleep_time, NULL);
-  } else {
-    // The following loop is determined empirically on a 700Mhz RPi
-    for (int i = nanos >> 2; i != 0; --i) {
-      asm("");   // force GCC not to optimize this away.
+    if(freeRunTimer) { // Pi 2?
+      // nanosleep() is ALL MESSED UP on Pi 2.  Instead we'll poll the
+      // free-running timer.  Spinning like this would clobber the single-
+      // core Pi 1 (hence nanosleep below), but seems OK-ish on the Pi 2.
+      // nanosleep() would still be preferred, but we might need to wait
+      // for an OS update with decent timer resolution.
+      uint32_t micros    = nanos / 1000,
+               startTime = *freeRunTimer;
+      while((*freeRunTimer - startTime) < micros);
+    } else {
+      // On Pi 1, nanosleep() is only mildly messed up, with a ~20 usec
+      // offset that must be compensated for.  For very short intervals
+      // (<30 uS, below) an idle counter loop is used instead.
+      struct timespec sleep_time = { 0, nanos - 20000 };
+      nanosleep(&sleep_time, NULL);
     }
+  } else {
+    // The following loop is determined empirically
+    for(volatile int i = nanos >> 3; i--; );
   }
 }
 
@@ -268,7 +262,7 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
 
       // Now switch on for the sleep time necessary for that bit-plane.
       io->ClearBits(output_enable.raw);
-      sleep_nanos(row_sleep_nanos[b]);
+      sleep_nanos(kBaseTimeNanos << b);
       io->SetBits(output_enable.raw);
     }
   }
