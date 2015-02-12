@@ -5,10 +5,16 @@
 
 void testApp::setup()
 {
+    #ifdef RPI
+    GPIO io;
+    if(!io.Init()){
+        printf("IO ERROR: are you root?");
+        return;
+    }
+    canvas = new RGBMatrix(&io, 32,2);
+    #endif // RPI
 
     //make a list of 100 particles
-
-
     ofBackground(0,0,0);
     for(int i = 0; i<PARTICLE_COUNT; i++ )
     {
@@ -55,6 +61,9 @@ void testApp::draw()
     for(it=universe.particles.begin(); it != universe.particles.end(); it++)
     {
         ofCircle((*it)->pos,1);
+        #ifdef RPI
+        canvas->SetPixel((*it)->pos.x, (*it)->pos.y, 255,255,255);
+        #endif // RPI
     }
 
     ofDrawBitmapString(ofToString(ofGetFrameRate()), 10, 10);
@@ -69,7 +78,12 @@ void testApp::draw()
 
    ofCircle((*it)->x, (*it)->y,1); }*/
 }
-
+testApp::~testApp(){
+    #ifdef RPI
+    canvas->Clear();
+    delete canvas;
+    #endif // RPI
+}
 //--------------------------------------------------------------
 void testApp::keyPressed(int key)
 {
