@@ -8,7 +8,6 @@ class Particle
         ForceType forceType;
         //anchor used for spring and suck
         ofVec2f pos, vel, anchor, anchor_e, anchor_eacc;
-
         float mass;
         ofVec2f force;
         float charge;
@@ -16,8 +15,6 @@ class Particle
         ofColor color;
         bool wrapCoordinates;
         Particle(float x = 0 , float y = 0, float m = .001, float c = 1, float d = 1, ofVec2f target = ofVec2f(0,0));
-       // Particle(float x, float y);
-      //  Particle();
         void update();
         void setForce(float x, float y){ force.set(x,y);}
         void setForce(ofVec2f f){ force = f;}
