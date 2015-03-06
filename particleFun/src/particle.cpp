@@ -20,6 +20,7 @@ void Particle::update(){
 
     static float lastTime = 1;
     float dt = lastTime - ofGetElapsedTimef();
+    float freqComp = 60/ofGetFrameRate();
     lastTime = (float)ofGetElapsedTimef();
 
     ofVec2f accel = force/mass;//force.getScaled(1/mass);
@@ -27,7 +28,7 @@ void Particle::update(){
 
 
     //if (forceType == CHARGE) // and a 'wind resistance' term
-        vel += accel*.01 - vel*damping;
+        vel += accel*.01- vel*damping;
 
     pos += vel*.01 ;
    // printf("x%f y%y\n", vel.x, vel.y);

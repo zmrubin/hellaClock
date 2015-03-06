@@ -24,8 +24,10 @@ class Particle
         void setCharge(float c){charge = c;}
         void setDamping(float d){damping = d;}
         void setMass(float m){mass = m;}
+        void setVel(float x, float y){vel.set(x,y);}
+        void setVel(ofVec2f v){vel = v;}
         ofVec2f getForce(){return force;}
-        void target(ofVec2f t){anchor = t;}
+        void target(ofVec2f t){anchor = t; setVel(0,0);}
         void setPos(float x, float y){pos.set(x,y);}
         virtual ~Particle();
     protected:

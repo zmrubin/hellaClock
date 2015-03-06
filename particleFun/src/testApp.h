@@ -7,10 +7,12 @@ charged particles, avoiding time region
 #define RPI
 #include "ofMain.h"
 #include "universe.h"
-
+#include "ofRGBMatrix.h"
 #ifdef RPI
+#define ADAFRUIT_RGBMATRIX_HAT
 #include "led-matrix.h"
 #include <unistd.h>
+
 using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::Canvas;
@@ -19,14 +21,16 @@ using rgb_matrix::Canvas;
 //#include "ofxTextSuite.h"
 #define PARTICLE_COUNT 200
 
-
+#ifdef RPI
+//Canvas *canvas;
+#endif // RPI
+        
 class testApp : public ofBaseApp{
 	public:
-	    #ifdef RPI
-	    Canvas *canvas;
-	    #endif // RPI
-        Universe universe;
-		void setup();
+                ofRGBMatrix rgbThread;
+                Universe universe;
+                float normFactor = 1;
+                void setup();
 		void update();
 		void draw();
 		void keyPressed(int key);
