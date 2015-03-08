@@ -4,7 +4,7 @@ particles attached on springs to points on a number
 particles forming a number, whose integrator reference changes
 charged particles, avoiding time region
 */
-//#define RPI
+#define RPI
 #include "ofMain.h"
 #include "universe.h"
 
@@ -33,7 +33,6 @@ public:
     ofRGBMatrix rgbThread;
     #endif
     Universe universe;
-    float normFactor = 1;
     void setup();
     void update();
     void draw();

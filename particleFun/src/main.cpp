@@ -1,7 +1,7 @@
 #include "testApp.h"
 #include "ofAppGlutWindow.h"
 //#include "ofAppNoWindow.h"
-
+#define RPI
 //--------------------------------------------------------------
 int main()
 {

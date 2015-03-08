@@ -46,6 +46,7 @@ void testApp::setup()
 //--------------------------------------------------------------
 void testApp::update()
 {
+    static float normFactor = 1;
     static float lastTime = 0;
     if(ofGetElapsedTimef() - lastTime > 1.0)
     {
