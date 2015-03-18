@@ -23,9 +23,9 @@ void Particle::update(){
     //we are going about this the lazy way to save on some calculations
 
     //if (forceType == CHARGE) // and a 'wind resistance' term
-    vel += accel*.01- vel*damping;
+    vel += accel*.1- 10*vel*damping;
 
-    pos += vel*.01 ;
+    pos += vel*.1 ;
    // printf("x%f y%y\n", vel.x, vel.y);
 
     if (pos.x > ofGetWidth())

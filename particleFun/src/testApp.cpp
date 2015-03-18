@@ -48,9 +48,9 @@ void testApp::update()
 {
     static float normFactor = 1;
     static float lastTime = 0;
-    if(ofGetElapsedTimef() - lastTime > 1.0)
+    if(ofGetElapsedTimef() - lastTime > 3.0)
     {
-        printf("%f\n",normFactor);
+        printf("%f\n",ofGetFrameRate());
         lastTime = ofGetElapsedTimef();
         string time = ofGetTimestampString("%h:%M:%S");
         universe.refString(time);
@@ -68,7 +68,7 @@ void testApp::draw()
     for(it=universe.particles.begin(); it != universe.particles.end(); it++)
     {
 #ifdef RPI
-        rgbThread.setPixel((*it)->pos.x, (*it)->pos.y, 255,255,255);
+        rgbThread.setPixel((*it)->pos, (*it)->color);
 #else
         ofCircle((*it)->pos,1);
 #endif // RPI

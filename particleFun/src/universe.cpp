@@ -24,19 +24,35 @@ void Universe::refString(string str)
     offScreenCharges.readToPixels(oscPix);
     float x = 0;
     float y = 0;
-    vector<Particle*>::iterator it = particles.begin();
+    int randIndex = ofRandom(particles.size());
+    //printf("ri : %i\t size %i\n", randIndex, particles.size());
+   
+   
+   vector<Particle*>::iterator it = particles.begin();
+     while (it != particles.end())
+    {
+        (*it)->forceType = CHARGE;
+//        (*it)->color = ofColor(ofRandom(40,255),ofRandom(40,255),ofRandom(40,255));
+        it++;
+    }
+    it = particles.begin() + randIndex;
+
     for (float h = 0; h<ofGetHeight(); h++)
     {
         for (float w = 0; w<ofGetWidth()*3; w+=3)
         {
             if(oscPix[w+h*ofGetWidth()*3] == 255 )
             {
-                (*it)->target(ofVec2f(x,y));//ofGetWidth()/2 , ofGetHeight()/2));
-                //(*it)->pos = ofVec2f(x,y);
-                (*it)->forceType = DIRECT;
+               (*it)->target(ofVec2f(x,y));//ofGetWidth()/2 , ofGetHeight()/2));
+             /*   (*it)->pos = ofVec2f(x,y);
+               (*it)->vel = ofVec2f(0,0);*/
+               (*it)->forceType = DIRECT;
                 //  printf("%i \n", oscPix[w+h*ofGetWidth()*3]);
+                //(*it)->color = ofColor(0,0,ofRandom(40,255));
                 it++;
-
+              if (it == particles.end())
+                  it = particles.begin();
+               
             }
             else if (oscPix[w+h*ofGetWidth()*3] == 128)
             {
@@ -47,11 +63,7 @@ void Universe::refString(string str)
         x = 0;
         y ++;
     }
-    while (it != particles.end())
-    {
-        (*it)->forceType = CHARGE;
-        it++;
-    }
+   
 }
 
 
@@ -66,18 +78,6 @@ void Universe::update()
         float dt = lastTime - ofGetElapsedTimef();
         lastTime = (float)ofGetElapsedTimef();
 
-
-        if ((*it)->forceType == DIRECT)
-        {
-            float kp = 100;
-            float ki =1;
-            float kd = -10000;
-            ofVec2f error_diff = (*it)->anchor_e - ((*it)->pos - (*it)->anchor);
-            (*it)->anchor_e = (*it)->pos - (*it)->anchor;
-            (*it)->anchor_eacc += (*it)->anchor_e;
-
-            (*it)->force = - ( (*it)->anchor_e*kp + (*it)->anchor_eacc*ki + error_diff*kd ) ;
-        }
 
 
         vector<Particle*>::iterator jt;
@@ -94,9 +94,27 @@ void Universe::update()
             }
         }
 
+        if ((*it)->forceType == DIRECT)
+        {/*
+            float kp = 100;
+            float ki =1;
+            float kd = -10000;
+            ofVec2f error_diff = (*it)->anchor_e - ((*it)->pos - (*it)->anchor);
+            (*it)->anchor_e = (*it)->pos - (*it)->anchor;
+            (*it)->anchor_eacc += (*it)->anchor_e;
 
-        (*it)->update();
-    }
+            (*it)->force = - ( (*it)->anchor_e*kp + (*it)->anchor_eacc*ki + error_diff*kd ) ;*/
+          ofVec2f error = (*it)->anchor - (*it)->pos;
+          (*it)->vel = ofVec2f(0,0);
+          (*it)->force = ofVec2f(0,0);
+          if(error.length() > 1)
+           (*it)->pos+= error/5;
+          else 
+           (*it)->pos = (*it)->anchor;
+         }
+  
+ (*it)->update();
+}
 
 
 }

@@ -38,7 +38,11 @@ public:
     {
         canvas->SetPixel (x, y, r, g, b);
     }
-    void fill(int r, int g, int b)
+      void setPixel (ofVec2f pos, ofColor color)
+    {
+        canvas->SetPixel (pos.x, pos.y, color.r, color.g, color.b);
+    }
+   void fill(int r, int g, int b)
     {
         canvas->Fill(r,g,b);
     }
