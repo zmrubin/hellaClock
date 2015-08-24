@@ -75,7 +75,8 @@ void testApp::draw()
 			ofColor cur = brcMap.getColor(x, y);
 
 #ifdef RPI
-        rgbThread.setPixel((*it)->pos, (*it)->color);
+ofVec2f pos = ofVec2f(x,y);
+        rgbThread.setPixel(pos, cur);
 #else
         ofSetColor(cur);
         ofCircle(x,y,1);
