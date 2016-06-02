@@ -27,10 +27,10 @@ void testApp::setup()
     }
 
 */
-
     //make a list of 100 particles
-
-    ofBackground(0,0,0);
+    receive.setup(OSCPORT);
+    globalBrightness = 1.0;
+   ofBackground(0,0,0);
     for(int i = 0; i<PARTICLE_COUNT; i++ )
     {
         int charge;
@@ -44,18 +44,42 @@ void testApp::setup()
 }
 
 //--------------------------------------------------------------
+float testApp::colorMag[6] = {1.0};
 void testApp::update()
 {
+  while(receive.hasWaitingMessages()){
+    ofxOscMessage m; 
+    receive.getNextMessage(&m);
+//     printf(m.getAddress().c_str());
+    if(m.getAddress() == "/Knob3/x"){
+     globalBrightness= m.getArgAsFloat(0);
+     }
+    if(m.getAddress() == "/Range/red"){
+     colorMag[0] = m.getArgAsFloat(0);
+     colorMag[1] = m.getArgAsFloat(1);
+     }
+     if(m.getAddress() == "/Range/green"){
+     colorMag[2] = m.getArgAsFloat(0);
+     colorMag[3] = m.getArgAsFloat(1);
+     }
+   if(m.getAddress() == "/Range/blue"){
+     colorMag[5] = m.getArgAsFloat(0);
+     colorMag[5] = m.getArgAsFloat(1);
+     }
+  
+  }
+
     static float normFactor = 1;
     static float lastTime = 0;
     if(ofGetElapsedTimef() - lastTime > 3.0)
     {
-        printf("%f\n",ofGetFrameRate());
+        printf("%f %f\n",ofGetFrameRate(),globalBrightness );
         lastTime = ofGetElapsedTimef();
         string time = ofGetTimestampString("%h:%M:%S");
         universe.refString(time);
     }
     universe.update();
+
 }
 
 //--------------------------------------------------------------
@@ -68,7 +92,11 @@ void testApp::draw()
     for(it=universe.particles.begin(); it != universe.particles.end(); it++)
     {
 #ifdef RPI
-        rgbThread.setPixel((*it)->pos, (*it)->color);
+        ofColor pColor = (*it)->color;
+        pColor.r *= globalBrightness * ofRandom (colorMag[0], colorMag[1]);
+        pColor.g *= globalBrightness * ofRandom (colorMag[2], colorMag[3]);
+        pColor.b *= globalBrightness * ofRandom (colorMag[4], colorMag[5]);
+        rgbThread.setPixel((*it)->pos,pColor );
 #else
         ofCircle((*it)->pos,1);
 #endif // RPI

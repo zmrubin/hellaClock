@@ -7,6 +7,8 @@ charged particles, avoiding time region
 #define RPI
 #include "ofMain.h"
 #include "universe.h"
+#include "ofxOsc.h"
+#define OSCPORT 5252
 
 #ifdef RPI
 #include "ofRGBMatrix.h"
@@ -33,6 +35,9 @@ public:
     ofRGBMatrix rgbThread;
     #endif
     Universe universe;
+    float globalBrightness;
+    static float colorMag[6];
+    ofxOscReceiver receive; 
     void setup();
     void update();
     void draw();
